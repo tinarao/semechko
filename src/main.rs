@@ -1,7 +1,8 @@
+use lexer::Lexer;
 use std::{env, path::Path, process::exit};
 
-use lexer::Lexer;
 mod lexer;
+mod tokens;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

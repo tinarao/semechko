@@ -1,29 +1,20 @@
+use crate::tokens::BLOCK_END_SYMBOL;
+use crate::tokens::KeywordKind;
+use crate::tokens::Token;
+use crate::tokens::get_operator_literals_map;
+use crate::tokens::get_symbol_tokens_value;
 use std::{fs, iter::Peekable, process::exit, str::Chars};
-
-#[derive(Debug)]
-enum TokenType {
-    Number(i64),
-}
 
 type Source<'s> = Peekable<Chars<'s>>;
 
-#[derive(Debug)]
-pub struct Token {
-    variant: TokenType,
-}
-
 pub struct Lexer {
     filepath: String,
-    current_char: Option<char>,
 }
 
 impl Lexer {
     pub fn new(filepath: &String) -> Lexer {
         let fp = String::from(filepath);
-        Lexer {
-            filepath: fp,
-            current_char: None,
-        }
+        Lexer { filepath: fp }
     }
 
     pub fn parse(&mut self) {
@@ -36,25 +27,66 @@ impl Lexer {
         };
 
         let tokens = self.lex(contents.chars().peekable());
-        println!("tokens: {:?}", tokens);
+        println!("tokens: {:#?}", tokens);
     }
 
     fn tokenize(&mut self, src: &mut Source) -> Option<Token> {
         let ch = src.peek()?;
         if ch.is_ascii_digit() {
             return Some(self.parse_number(src));
+        } else if ch.is_alphabetic() {
+            return Some(self.parse_alphabetic(src));
+        } else if self.is_operator(ch) {
+            return Some(self.parse_operator(src));
+        } else if ch == &BLOCK_END_SYMBOL {
+            src.next();
+            return Some(Token::BlockEnd);
+        } else {
+            let symbol = self.parse_symbol(ch);
+            src.next();
+            return symbol;
+        }
+    }
+
+    fn parse_symbol(&self, ch: &char) -> Option<Token> {
+        let symbols = get_symbol_tokens_value();
+        let token = symbols.get(&ch.to_string());
+        match token {
+            Some(t) => return Some(t.clone()),
+            None => return None,
+        }
+    }
+
+    fn is_operator(&self, ch: &char) -> bool {
+        let operators = get_operator_literals_map();
+        let ke = ch.to_string();
+
+        return operators.contains_key(&ke);
+    }
+
+    fn parse_operator(&self, src: &mut Source) -> Token {
+        let operators = get_operator_literals_map();
+        let buf = self.take_till(src, |c| !c.is_whitespace());
+        let kind = operators.get(&buf).unwrap();
+
+        return Token::Operator((*kind).clone());
+    }
+
+    fn parse_alphabetic(&self, src: &mut Source) -> Token {
+        let buf = self.take_till(src, |c| c.is_alphabetic());
+
+        if buf == "рыгнуть".to_string() {
+            return Token::Keyword(KeywordKind::Print);
         }
 
-        return None;
+        return Token::Str(buf);
     }
 
     fn parse_number(&self, src: &mut Source) -> Token {
         let buf = self.take_till(src, |c| c.is_ascii_digit());
         let token = buf.parse().unwrap();
 
-        return Token {
-            variant: TokenType::Number(token),
-        };
+        return Token::Number(token);
     }
 
     fn take_till(&self, src: &mut Source, till: impl Fn(char) -> bool) -> String {
@@ -74,8 +106,23 @@ impl Lexer {
     fn lex(&mut self, mut src: Source) -> Vec<Token> {
         let mut tokens: Vec<Token> = Vec::new();
 
-        while let Some(token) = self.tokenize(&mut src) {
-            tokens.push(token)
+        while let Some(_) = src.peek() {
+            // Skip whitespace
+            while let Some(c) = src.peek() {
+                if !c.is_whitespace() {
+                    break;
+                }
+                src.next();
+            }
+
+            if let Some(t) = self.tokenize(&mut src) {
+                tokens.push(t);
+            } else {
+                // If we couldn't tokenize and it's not whitespace, skip one character
+                if let Some(_) = src.peek() {
+                    src.next();
+                }
+            }
         }
 
         return tokens;
