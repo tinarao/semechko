@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
-    Number(i64),
+    Number(SemechkoNumber),
     Str(String),
     Operator(OperatorKind),
     Keyword(KeywordKind),
@@ -11,12 +11,14 @@ pub enum Token {
     RParen,
 }
 
-#[derive(Debug, Clone)]
+pub type SemechkoNumber = i64;
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum KeywordKind {
     Print,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum OperatorKind {
     Plus,
     Minus,

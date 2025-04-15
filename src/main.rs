@@ -1,7 +1,9 @@
 use lexer::Lexer;
+use parser::Parser;
 use std::{env, path::Path, process::exit};
 
 mod lexer;
+mod parser;
 mod tokens;
 
 fn main() {
@@ -14,8 +16,15 @@ fn main() {
         exit(1);
     }
 
+    if !filepath.ends_with(".sk") {
+        println!("invalid file format. expected \".sk\"");
+        exit(1);
+    }
+
     let mut lexer = Lexer::new(filepath);
-    lexer.parse();
-    // open file
-    // tokenise
+    let tokens = lexer.parse();
+
+    let mut parser = Parser::new(tokens);
+    let ast = parser.parse();
+    println!("ast: {:#?}", ast);
 }

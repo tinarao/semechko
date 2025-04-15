@@ -17,7 +17,7 @@ impl Lexer {
         Lexer { filepath: fp }
     }
 
-    pub fn parse(&mut self) {
+    pub fn parse(&mut self) -> Vec<Token> {
         let contents = match fs::read_to_string(&self.filepath) {
             Ok(s) => s,
             Err(e) => {
@@ -27,7 +27,7 @@ impl Lexer {
         };
 
         let tokens = self.lex(contents.chars().peekable());
-        println!("tokens: {:#?}", tokens);
+        return tokens;
     }
 
     fn tokenize(&mut self, src: &mut Source) -> Option<Token> {
