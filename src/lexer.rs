@@ -12,7 +12,7 @@ pub struct Lexer {
 }
 
 impl Lexer {
-    pub fn new(filepath: &String) -> Lexer {
+    pub fn new(filepath: &String) -> Self {
         let fp = String::from(filepath);
         Lexer { filepath: fp }
     }

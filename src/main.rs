@@ -1,7 +1,9 @@
+use codegen::CodeGenerator;
 use lexer::Lexer;
 use parser::Parser;
-use std::{env, path::Path, process::exit};
+use std::{env, fs, path::Path, process::exit};
 
+mod codegen;
 mod lexer;
 mod parser;
 mod tokens;
@@ -9,6 +11,11 @@ mod tokens;
 fn main() {
     let args: Vec<String> = env::args().collect();
     let filepath = &args[1];
+    let mut output_filename = String::from(&args[2]);
+
+    if !output_filename.ends_with(".rs") {
+        output_filename.push_str(".rs");
+    }
 
     let exists = Path::new(&filepath).exists();
     if !exists {
@@ -27,4 +34,12 @@ fn main() {
     let mut parser = Parser::new(tokens);
     let ast = parser.parse();
     println!("ast: {:#?}", ast);
+
+    let mut codegen = CodeGenerator::new();
+    let code = codegen.generate(ast);
+
+    match fs::write(&output_filename, code) {
+        Ok(()) => println!("Transpiled .sk code to Rust. Saved at {}", output_filename),
+        Err(e) => panic!("Failed to save result code: {}", e),
+    };
 }
